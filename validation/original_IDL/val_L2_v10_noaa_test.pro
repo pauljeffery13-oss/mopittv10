@@ -66,8 +66,9 @@ pro val_L2_v10_noaa
 
 
     ; updated NOAA profiles (November, 2025)
-    ;spawnstr =  'ls /net/mopfl2021/MOPITT/project/mopsips/data/val/cmdl/profile/PROFILES_FOR_V9_VALIDATION/INTERPOLATED_PROFILES/' + sitecodes(isite) + '/*.asc'
     spawnstr =  'ls /home/buchholz/MOPITTv10/MOPITT_Validation/mopittv10_python/sample_data/' + sitecodes(isite) + '/*.asc'
+    ;spawnstr =  'ls /home/buchholz/MOPITTv10/MOPITT_Validation/aircraft_profile_CO_data/NOAA/' + sitecodes(isite) + '/*.asc'
+
 
     spawn, spawnstr, valfiles
 
