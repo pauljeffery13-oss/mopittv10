@@ -148,13 +148,11 @@ print(aircraft_full_meta)
 location_temp =  aircraft_full_meta.transpose()
 sitename_temp = aircraft_full_meta.columns.str.split('-')
 location_temp['sitename'] = sitename_temp.str[0]
-print(location_temp)
-
 location_info = location_temp.groupby(['sitename'], as_index=False).mean()
 print(location_info)
 
-# format floats: float( '%.1f'%(location_meta.iloc[0,1]) )
-location_info.to_csv('NOAA_locations.csv', index=False)
+# write the csv
+location_info.to_csv('NOAA_locations.csv', index=False, float_format='%.2f')
 
 # ========================================================================
 # calculate average profile and standard deviation
@@ -179,7 +177,8 @@ ax.fill_betweenx(aircraft_mean.index, aircraft_mean - aircraft_sd, aircraft_mean
 #titles
 plt.title(plot_title,fontsize=16)        
 plt.xlabel('CO VMR (ppb)',fontsize=14)
-plt.ylabel('Pressure',fontsize=14)
+plt.ylabel('Pressure (hPa)',fontsize=14)
+ax.tick_params(axis='both', labelsize=14) 
 
 # legend
 plt.legend(bbox_to_anchor=(0.98, 0.88),loc='lower right',fontsize=14)
@@ -187,6 +186,9 @@ plt.legend(bbox_to_anchor=(0.98, 0.88),loc='lower right',fontsize=14)
 # extra information
 plt.text(0.72, 0.85, "N: "+str(num_prof),fontsize=14, transform=plt.gca().transAxes)
 
+# background grid
+ax.yaxis.grid(color='lightgray', linestyle='dashed', linewidth=1)
+ax.xaxis.grid(color='lightgray', linestyle='dashed', linewidth=1)
 
 plt.savefig(profile_plot_name)
 plt.show()
