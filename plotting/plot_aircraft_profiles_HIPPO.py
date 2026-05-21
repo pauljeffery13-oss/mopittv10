@@ -19,16 +19,16 @@ import sys  # for sys.exit()
 
 # path setup
 #--- all data (https://doi.org/10.5281/zenodo.20147785)
-noaa_folder = '/home/buchholz/MOPITTv10/MOPITT_Validation/aircraft_profile_CO_data/NOAA/'
-aircraft_files = sorted(glob.glob(noaa_folder+"/*/*.asc"))
+hippo_folder = '/home/buchholz/MOPITTv10/MOPITT_Validation/aircraft_profile_CO_data/HIPPO/'
+aircraft_files = sorted(glob.glob(hippo_folder+"/*/*.asc"))
 
 # plot definitions
-profile_plot_name = '../images/noaa_all_profile.png'
-plot_color = 'royalblue'
-plot_title = 'Average aircraft profiles of CO from NOAA'
+profile_plot_name = '../images/hippo_all_profile.png'
+plot_color = 'seagreen'
+plot_title = 'Average aircraft profiles of CO from HIPPO'
 
 #out csv
-location_csv_name = 'NOAA_locations.csv'
+location_csv_name = 'HIPPO_locations.csv'
 
 # ========================================================================
 # functions
@@ -53,7 +53,7 @@ def get_location_name(datafile):
     location_time_UTC = location_meta_temp_2.str[1]
 
     location_meta_temp_3 = filename.iloc[0].str.split('/')
-    location_name = location_meta_temp_3.str[14]
+    location_name = location_meta_temp_3.str[5].str.split('_').str[0]
 
     concat_info = location_name+'-'+location_date_UTC+'-'+location_time_UTC
     location_ID = str(concat_info.values[0])
@@ -148,11 +148,10 @@ print(aircraft_full_meta)
 # ========================================================================
 # save out location file
 # ========================================================================
-location_temp =  aircraft_full_meta.transpose()
-sitename_temp = aircraft_full_meta.columns.str.split('-')
-location_temp['sitename'] = sitename_temp.str[0]
-location_info = location_temp.groupby(['sitename'], as_index=False).mean()
-print(location_info)
+location_temp= aircraft_full_meta.transpose()
+location_temp['location'] = aircraft_full_meta.columns
+location_info = location_temp.groupby(['location'], as_index=False).mean()
+#print(location_info)
 
 # write the csv
 location_info.to_csv(location_csv_name, index=False, float_format='%.2f')
