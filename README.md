@@ -22,10 +22,11 @@ Data processing and analysis is separated into several sections.
 
 Validation code description.
 
-| Name | description | location |
-|:---------:|:------------:|:----:|
-| original_IDL | Folder: IDL code for test stations used for converting to python framework (val_L2_v10_noaa_test.pro, distance.pro). This location also houses a folder containing a subfolder called SOFTWARE, that archives original IDL code used to validate previous versions of MOPITT. |  [original_IDL](https://github.com/rrbuchholz/mopittv10/tree/main/validation/original_IDL) |
-| copilot_transformed | Folder: Copilot transformation of IDL code as a starting point for refactoring code. |  [copilot_transformed](https://github.com/rrbuchholz/mopittv10/tree/main/validation/copilot_transformed) |
+| Name | Description |
+|:---------:|:------------:|
+| [original_IDL](https://github.com/rrbuchholz/mopittv10/tree/main/validation/original_IDL) | Folder: IDL code for test stations used for converting to python framework (val_L2_v10_noaa_test.pro, distance.pro). This location also houses a subfolder called SOFTWARE, that archives original IDL code used to validate previous versions of MOPITT. 
+| [copilot_transformed](https://github.com/rrbuchholz/mopittv10/tree/main/validation/copilot_transformed) | Folder: Copilot transformation of IDL code as a starting point for refactoring code. | 
+| [plot_vald_dlog_9levs_v10_v2.py](https://github.com/rrbuchholz/mopittv10/blob/main/validation/plot_vald_dlog_9levs_v10_v2.py) | Plot correlation plots of smoothed aircraft values against retrieved MOPITT values. Several layers and total column. | 
 
 Plotting code description.
 
