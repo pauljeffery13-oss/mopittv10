@@ -2,7 +2,7 @@
 Code developed for this project includes algorithms to validate version 10 MOPITT carbon monoxide (CO) retrievals against aircraft-measured profiles.
 
 To cite this codebase, please use:
-  * TBD
+> **Code DOI**: 
 
 Latest version: TBD
 
