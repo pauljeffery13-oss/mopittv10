@@ -21,6 +21,48 @@ returns:
 def wc(filename):
     return int(check_output(["wc", "-l", filename]).split()[0])
 
+'''define a function to check desired latitude band and filter the stations included in the analysis to just those within the band.
+inputs:
+    -lat_min: the minimum latitude of the band
+    -lat_max: the maximum latitude of the band
+    -site_codes: list of all the site codes
+    -site_info_file: the csv file containing the site information 
+    
+returns:
+    -new_sites: a revised list of site codes that eliminates all outside of the band
+    -lat_str: a naming string for use specifying the latitude band used
+'''
+def filter_site_codes(lat_min, lat_max, site_codes, site_info_file):
+    if ((lat_min != -90) & (lat_max!=90)):
+        site_name, site_lat = np.loadtxt(site_info_file, dtype='U3, float', delimiter =',', usecols=(0,1), unpack = True, skiprows=1)
+        band_ind = np.where((site_lat >= lat_min) & (site_lat <= lat_max))[0]
+        band_sites = site_name[band_ind]
+        
+        new_sites = []
+        for site in site_codes:
+            if len(np.where(site == band_sites)[0]) == 1:
+                new_sites.append(site)
+        site_codes = new_sites
+            
+    if ((lat_min == -90) & (lat_max==90)):
+        lat_str =''
+    elif ((lat_min == -90) & (lat_max==-60)):
+        lat_str ='_s_pole'
+    elif ((lat_min == -60) & (lat_max==-30)):
+        lat_str ='_s_mlat'
+    elif ((lat_min == -30) & (lat_max==0)):
+        lat_str ='_s_trop'
+    elif ((lat_min == -30) & (lat_max==30)):
+        lat_str ='_tropic'
+    elif ((lat_min == 0) & (lat_max==30)):
+        lat_str ='_n_trop'
+    elif ((lat_min == 30) & (lat_max==60)):
+        lat_str ='_n_mlat'
+    elif ((lat_min == 60) & (lat_max==30)):
+        lat_str ='_n_pole'  
+    
+    return site_codes, lat_str
+
 '''define main function for plotting the correlation
 inputs: 
     -mop_prod: the mopitt product to be examined
@@ -41,7 +83,7 @@ outputs:
 other function dependencies: 
     -wc
 '''
-def plot_vald_main(mop_prod, file_loc, file_str, site_codes, ngd_min, plot_type): #plot 9 levels plus total column
+def plot_vald_main(mop_prod, file_loc, file_str, site_codes, ngd_min, plot_type, lat_str, igd_flag): #plot 9 levels plus total column
     
     #define naming convention for output file
     if mop_prod == 'TIR':
@@ -61,11 +103,16 @@ def plot_vald_main(mop_prod, file_loc, file_str, site_codes, ngd_min, plot_type)
     #define log10e for percent deviation 
     log10e = np.log10(np.e)
 
-    #define figure details (name, panels, size)
-    fig_name = 'plot_vald_dlog_9levs.v10' + fname_key + '.noaa.' + plot_type
+    #define figure details (name, panels, size) and output file
+    if len(site_codes) > 1:
+        fig_name = 'plot_vald_dlog_9levs.v10' + fname_key + lat_str + '.noaa.allcld.' + plot_type
+        out_file = 'plot_vald_dlog_9levs.v10' + fname_key + lat_str + '.noaa.allcld.dat'
+    else: #for single validation site
+        fig_name = 'plot_vald_dlog_9levs.v10' + fname_key + lat_str + '.noaa.' + site_codes[0] + '.allcld.' + plot_type
+        out_file = 'plot_vald_dlog_9levs.v10' + fname_key + lat_str + '.noaa.' + site_codes[0] + '.allcld.dat'    
     fig, axes = plt.subplots(5, 2, figsize=(8, 11))
     axes = axes.flatten()
-      
+
     #define plot settings (levels)
     ilev_plot = [8,7,6,5,4,3,2,1,0,-1]
     lvl_lbl = ['200 hPa','300 hPa','400 hPa','500 hPa','600 hPa','700 hPa','800 hPa','900 hPa','Surface','Column']
@@ -187,9 +234,23 @@ def plot_vald_main(mop_prod, file_loc, file_str, site_codes, ngd_min, plot_type)
                     val = alldat[1, ilev_plot[i_lev], :]
                     ap = alldat[2, ilev_plot[i_lev], :]
 
-                #apply quality filter for daytime and nighttime, ocean and land, needs non-zero values for retrieval, aircraft and a priori profiles  
-                igd = np.where((rtv > 0) & (val > 0) & (ap > 0))[0]
+                #filter data based on specified filter flag 
+                if igd_flag == 'sza':
+                    #apply quality filter for daytime and nighttime, ocean and land, needs non-zero values for retrieval, simulated and a solar zenith angle less than 80 degrees
+                    igd = np.where((rtv > 0) & (val > 0) & (solza < 80))[0]                    
                 
+                elif igd_flag == 'basic':
+                    #apply quality filter for daytime and nighttime, ocean and land, needs non-zero values for retrieval, simulated and a solar zenith angle less than 80 degrees
+                    igd = np.where((rtv > 0) & (val > 0) & (ap > 0))[0]
+                
+                elif igd_flag == 'both':
+                    #apply quality filter for daytime and nighttime, ocean and land, needs non-zero values for retrieval, simulated and a solar zenith angle less than 80 degrees
+                    igd = np.where((rtv > 0) & (val > 0) & (solza < 80) & ((ap > 0)))[0] 
+                
+                else:
+                    #apply quality filter for daytime and nighttime, ocean and land, needs non-zero values for retrieval, simulated and a solar zenith angle less than 80 degrees
+                    igd = np.where((rtv > 0) & (val > 0))[0]  
+
                 #check if there's enough good data points
                 if len(igd) < ngd_min:
                     continue
@@ -274,6 +335,10 @@ def plot_vald_main(mop_prod, file_loc, file_str, site_codes, ngd_min, plot_type)
             bias_mean = np.mean(1e-17*(rtv_mean_hold - val_mean_hold))
             bias_stdev = np.std(1e-17*(rtv_mean_hold - val_mean_hold))
             
+            #calculate the bias as a %, this is used for the table reporting but not written out
+            col_bias_perc = np.round(np.mean((rtv_mean_hold - val_mean_hold)/val_mean_hold), 1)
+            col_bias_sd_perc = np.round(np.std((rtv_mean_hold - val_mean_hold)/val_mean_hold), 1)
+            
             bias_mean_arr[i_lev] = np.round(bias_mean, 1)
             bias_stdev_arr[i_lev] = np.round(bias_stdev, 1)
 
@@ -331,6 +396,27 @@ def plot_vald_main(mop_prod, file_loc, file_str, site_codes, ngd_min, plot_type)
     plt.savefig(fig_name, format = plot_type)
     plt.close()
     
+    #print LaTeX formatted table to output file, have it doen two ways 
+    with open(out_file, 'w') as f:
+        f.write(f"N = {nval}\n")
+        f.write('\n\n\n')
+
+        f.write("Level & Bias & SD & r\\\\ \n")
+        f.write("\\hline \n")
+        for i_lev in range(nlevs):
+            if ilev_plot[i_lev] == -1:
+                f.write(f"{lvl_lbl[i_lev]} & {col_bias_perc:.2f} \% & {col_bias_sd_perc:.2f} \% & {r_arr[i_lev]:.2f} \\\\ \n")
+                f.write(f"{lvl_lbl[i_lev]} & {bias_mean_arr[i_lev]:.2f} x10$^{{17}}$ & {bias_stdev_arr[i_lev]:.2f} x10$^{{17}}$ & {r_arr[i_lev]:.2f} \\\\ \n")
+            else:
+                f.write(f"{lvl_lbl[i_lev]} & {bias_mean_arr[i_lev]:.2f} \% & {bias_stdev_arr[i_lev]:.2f} \%  & {r_arr[i_lev]:.2f} \\\\ \n")
+    
+        f.write('\n\n\n')
+        f.write(" & Column & Surface & 800 hPa & 600 hPa & 400 hPa & 200 hPa \\\\ \n")
+        f.write("\\hline \n")
+        f.write(f" Bias & {bias_mean_arr[9]:.2f} x10$^{{17}}$ molec cm$^{{-2}}$  & {bias_mean_arr[8]:.2f} \% & {bias_mean_arr[6]:.2f} \% & {bias_mean_arr[4]:.2f} \% & {bias_mean_arr[2]:.2f} \% & {bias_mean_arr[0]:.2f} \% \\\\ \n")
+        f.write(f" SD & {bias_stdev_arr[9]:.2f} x10$^{{17}}$ molec cm$^{{-2}}$  & {bias_stdev_arr[8]:.2f} \% & {bias_stdev_arr[6]:.2f} \% & {bias_stdev_arr[4]:.2f} \% & {bias_stdev_arr[2]:.2f} \% & {bias_stdev_arr[0]:.2f} \% \\\\ \n")
+        f.write(f" r & {r_arr[9]:.2f} & {r_arr[8]:.2f} & {r_arr[6]:.2f}  & {r_arr[4]:.2f}  & {r_arr[2]:.2f}  & {r_arr[0]:.2f}  \\\\ \n")
+
     return bias_mean_arr, bias_stdev_arr, r_arr 
      
 if __name__ == "__main__":
@@ -341,17 +427,32 @@ if __name__ == "__main__":
     file_loc = '/Users/pauljeffery/Downloads/mopittv10-main 2/sample_pairing'
     file_str = 'val_L2_v10.L2V19.9.2.'
     
+    #file of noaa site information (can leave blank if lat_min and lat_max are +- 90)
+    site_info_file = '/Users/pauljeffery/Downloads/NOAA_locations.csv'
+    
     #define site code list and resulting values
     site_codes = ['bne']
 
     #running parameters for the number of matches within each file needed 
     ngd_min = 5
+    
+    #outside of the ngd_min filter, there is a second filter for data. For example, it has been used for cloud filtering. For the correlation IDL program default was nonzero retrieved column, nonzero simulated column, and nonzero a priori. 
+    #This bias program defaulted to nonzero retrieved column, nonzero simulated column, and solar zenith angle (solza) less than 80 deg. Here we create a flag for this to try to ensure both programs are run identically. 
+    #The options so far are 'sza' (nonzero retrieved column, nonzero simulated column, solza less than 80), 'basic' (nonzero retrieved column, nonzero simulated column, nonzero a priori), and 'both' (all four previous conditions) 
+    igd_flag = 'basic' #'basic', 'both'
 
     #define figure details for output
     plot_type = 'png' #should be eps
     
+    #running paramaters required for filtering the sites to a specific latitude band.
+    lat_min = -90
+    lat_max = 90
+    
+    #function to trim the site_codes to only those within a desired band
+    site_codes, lat_str = filter_site_codes(lat_min, lat_max, site_codes, site_info_file)
+    
     #run main function, return mean bias, bias standard deviation, and the correlation 
-    bias_mean_arr, bias_stdev_arr, r_arr  = plot_vald_main(mop_prod, file_loc, file_str, site_codes, ngd_min, plot_type)
+    bias_mean_arr, bias_stdev_arr, r_arr  = plot_vald_main(mop_prod, file_loc, file_str, site_codes, ngd_min, plot_type, lat_str, igd_flag)
 
    
 
