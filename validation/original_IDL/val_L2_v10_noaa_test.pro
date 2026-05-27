@@ -66,7 +66,7 @@ pro val_L2_v10_noaa
 
 
     ; updated NOAA profiles (November, 2025)
-    spawnstr =  'ls /home/buchholz/MOPITTv10/MOPITT_Validation/mopittv10_python/sample_data/' + sitecodes(isite) + '/*.asc'
+    spawnstr =  'ls /home/buchholz/MOPITTv10/MOPITT_Validation/mopittv10_python/sample_data/NOAA/' + sitecodes(isite) + '/*.asc'
     ;spawnstr =  'ls /home/buchholz/MOPITTv10/MOPITT_Validation/aircraft_profile_CO_data/NOAA/' + sitecodes(isite) + '/*.asc'
 
 
@@ -216,7 +216,8 @@ pro val_L2_v10_noaa
 
       ; find matching MOP02 files
       ; Validation V10 files
-      spawnstr =  'ls  /MOPITT/VALIDATION/ArchiveV10T/L2_9/' + profyr + profmo + '/' + profmo + profdy + '/MOP02T-*L2V28.0.1.he5'
+      ;spawnstr =  'ls  /MOPITT/VALIDATION/ArchiveV10T/L2_9/' + profyr + profmo + '/' + profmo + profdy + '/MOP02T-*L2V28.0.1.he5'
+      spawnstr =  'ls  /MOPITT/V10T/Archive/L2/' + profyr + profmo + '/' + profmo + profdy + '/MOP02T-*L2V28.0.1.he5'
 
       ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -430,11 +431,11 @@ pro val_L2_v10_noaa
 
           ;print, 'dist = ', dist, ', distmax = ', distmax
 
-         if (abs(dthrs) le dthrsmax) then begin
-           if (dist le distmax) then begin
-            print, 'Inside radius threshold'
-            endif
-          endif
+         ;if (abs(dthrs) le dthrsmax) then begin
+         ;  if (dist le distmax) then begin
+         ;   print, 'Inside radius threshold'
+         ;   endif
+         ; endif
 
           ;if (dist le distmax) then begin
           ;  print, 'Inside radius threshold'
