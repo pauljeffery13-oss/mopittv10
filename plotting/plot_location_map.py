@@ -43,7 +43,7 @@ ax = plt.axes(projection=ccrs.PlateCarree())
 #longitude limits in degrees
 ax.set_xlim(-179,180)
 #latitude limits in degrees
-ax.set_ylim(-90,90)
+ax.set_ylim(-80,80)
 
 # add coastlines
 ax.add_feature(cfeature.COASTLINE)
@@ -51,8 +51,6 @@ ax.add_feature(cfeature.BORDERS)
 
 #add lat lon grids
 gl = ax.gridlines(draw_labels=True, color='grey', alpha=0.8, linestyle='--')
-gl.xlabels_top = False
-gl.ylabels_right = False
 
 # Titles
 # Main
@@ -67,7 +65,7 @@ ax.text(0.5, -0.08, 'Longitude', va='bottom', ha='center',
         rotation='horizontal', rotation_mode='anchor',
         transform=ax.transAxes, fontsize=14)
 
-
+# NOAA locations
 #add locations in a loop
 for i in range(num_obs):
      site_name = str(site_def.loc[i,'sitename']) 
@@ -78,11 +76,17 @@ for i in range(num_obs):
      #       ', lon = ' + str(site_lon) + 
      #       ', lat = ' + str(site_lat))
 
-     plt.plot(site_lon, site_lat, linestyle='none', marker="o", markersize=8, alpha=0.8, c="black", markeredgecolor="red", markeredgewidth=1, transform=ccrs.PlateCarree())
+     plt.plot(site_lon, site_lat, linestyle='none', marker="o", markersize=6, alpha=0.8, c="red", markeredgecolor="red", markeredgewidth=0.8, transform=ccrs.PlateCarree())
 #    plt.text(site_lon + 0.8, site_lat + 0.8, site_name, fontsize=20, horizontalalignment='left', transform=ccrs.PlateCarree())
 
-
 #add legend
+
+# HIPPO flights
+
+
+# ATom flights
+
+
 
 
 plt.savefig(map_plot_name)
