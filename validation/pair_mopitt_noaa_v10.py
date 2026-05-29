@@ -10,6 +10,14 @@ retrievals of CO.
   To use on mopfl2012:
   > python3.12 pair_mopitt_noaa_v10.py
 
+  Steps in process:
+  #--- load aircraft files
+  #--- aircraft filters
+  #--- load coincident MOPITT file
+  #--- MOPITT spatiotemporal filters
+  #--- adjust to 10 layers
+  #--- use MERRA2 water vapor
+
 --- rrb 2026-05-29
 '''
 
