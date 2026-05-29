@@ -39,11 +39,17 @@ plt.figure(figsize=(20,8))
 #Define projection
 ax = plt.axes(projection=ccrs.PlateCarree())
 
-# Zoom to a region
+# World
 #longitude limits in degrees
 ax.set_xlim(-179,180)
 #latitude limits in degrees
 ax.set_ylim(-80,80)
+
+#North America
+#longitude limits in degrees
+#ax.set_xlim(-130,-50)
+#latitude limits in degrees
+#ax.set_ylim(20,65)
 
 # add coastlines
 ax.add_feature(cfeature.COASTLINE)
@@ -77,7 +83,7 @@ for i in range(num_obs):
      #       ', lat = ' + str(site_lat))
 
      plt.plot(site_lon, site_lat, linestyle='none', marker="o", markersize=6, alpha=0.8, c="red", markeredgecolor="red", markeredgewidth=0.8, transform=ccrs.PlateCarree())
-#    plt.text(site_lon + 0.8, site_lat + 0.8, site_name, fontsize=20, horizontalalignment='left', transform=ccrs.PlateCarree())
+#     plt.text(site_lon + 0.6, site_lat + 0.2, site_name, fontsize=10, horizontalalignment='left', transform=ccrs.PlateCarree())
 
 #add legend
 

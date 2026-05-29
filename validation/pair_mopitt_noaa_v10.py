@@ -1,15 +1,22 @@
 '''
-Code to load and plot aircraft profiles of carbon monoxide
-collated and harmonized for MOPITT v10 validation
+Code to load and compare aircraft profiles of carbon monoxide
+collated and harmonized for validation against MOPITT v10
+retrievals of CO.
 
---- rrb 2026-05-13
+  Filter definitons:
+  - aircraft profile must start below 750 hPa (850 hPa for NOAA sites sgp, lef, esp, or 700 hPa for NOAA rta), and the profile must end higher than 450 hPa (500 hPa for NOAA rta, 550 hPa for NOAA sgp, lef, esp). Additionally, the aircraft profiles must contain 5 or more flask measurements.
+  - MOPITT retrievals must be within a 50 km radius for NOAA locations, (200 km radius for HIPPO and ATom), and MOPITT retrieval time must be within +/- 12 hrs of the observation. Finally, there must be 5 or more MOPITT profiles per aircraft profile.
+
+  To use on mopfl2012:
+  > python3.12 pair_mopitt_noaa_v10.py
+
+--- rrb 2026-05-29
 '''
 
 
 #library
 import glob # for listing files
 import pandas as pd
-import matplotlib.pyplot as plt
 import sys  # for sys.exit()
 
 
@@ -17,18 +24,33 @@ import sys  # for sys.exit()
 # user definitions
 # ========================================================================
 
-# path setup
+# NOAA file location
 #--- all data (https://doi.org/10.5281/zenodo.20147785)
-noaa_folder = '/home/buchholz/MOPITTv10/MOPITT_Validation/aircraft_profile_CO_data/NOAA/'
+noaa_folder = '/home/buchholz/MOPITTv10/MOPITT_Validation/mopittv10_python/sample_data/NOAA/'
+#noaa_folder = '/home/buchholz/MOPITTv10/MOPITT_Validation/aircraft_profile_CO_data/NOAA/'
 aircraft_files = sorted(glob.glob(noaa_folder+"/*/*.asc"))
 
-# plot definitions
-profile_plot_name = '../images/noaa_all_profile.png'
-plot_color = 'royalblue'
-plot_title = 'Average aircraft profiles of CO from NOAA'
+# MOPITTv10 file location
+#mopitt_folder = '/MOPITT/V10T/Archive/L2/'
 
-#out csv
-location_csv_name = 'NOAA_locations.csv'
+# MERRA2 file location
+#mopitt_folder = '/MOPITT/project/datasets/merra2-nc4/Rebecca/3D/'
+
+# Outfile name template
+location_csv_name = '/home/buchholz/MOPITTv10/MOPITT_Validation/mopittv10_python/validation/validation_pairing/val_L2_v10.L2V19.9.2.'
+
+# Filter thresholds
+# Number of aircraft measurements averaged
+nflaskmin = 5.
+# Aircraft profile extent
+p_top_thr = 450.
+p_bot_thr = 750.
+# Coarse MOPITT spatial range acceptance
+dlatmax = 2.5
+dlonmax = 2.5
+# Fine MOPITT spatiotemporal range acceptance
+distmax = 50.
+dthrsmax = 12.
 
 # ========================================================================
 # functions
@@ -96,31 +118,33 @@ def load_meta(datafile):
     location_ID = get_location_name(datafile)
     location_meta = pd.read_csv(datafile, header=None, skiprows=1, nrows=1, sep='\\s+')
     aircraft_meta_array = pd.DataFrame(columns=[location_ID])
+    location_meta_temp = location_ID.iloc[0].str.split('-')
+    #aircraft_meta_array.loc['DD'] = location_meta.iloc[0,0]
+    #aircraft_meta_array.loc['MM'] = location_meta.iloc[0,0]
+    #aircraft_meta_array.loc['YYYY'] = location_meta.iloc[0,0]
+    aircraft_meta_array.loc['HHSS'] = location_meta.iloc[0,0]
     aircraft_meta_array.loc['lat'] = location_meta.iloc[0,0]
     aircraft_meta_array.loc['lon'] = location_meta.iloc[0,1]
+    #correct for longitude values > 180.
+    if (aircraft_meta_array.loc['lon'].values > 180.):
+        aircraft_meta_array.loc['lon'] = aircraft_meta_array.loc['lon'] - 360.
     aircraft_meta_array.loc['presmax'] = location_meta.iloc[0,2]
     aircraft_meta_array.loc['presmin'] = location_meta.iloc[0,3]
     aircraft_meta_array.loc['N'] = location_meta.iloc[0,4]
+    aircraft_meta_array.loc['fname'] = datafile
 
     return aircraft_meta_array
 
 
-def profile_plot(x,y,color_choice,label_string,linewidth,marker):
-    plt.plot(x, y, marker, label=label_string,
-         color=color_choice,
-         markersize=8, linewidth=linewidth,
-         markerfacecolor=color_choice,
-         markeredgecolor='grey',
-         markeredgewidth=1)
-
 # ========================================================================
-# load files
+# process the comparison
 # ========================================================================
+#--- load aircraft files
 
 count = 0
 
-#for file in aircraft_files[0:5]:
-for file in aircraft_files:
+for file in aircraft_files[0:5]:
+#for file in aircraft_files:
     profile_ID = get_location_name(file)
 
     if count == 0:
@@ -144,59 +168,34 @@ print('**************')
 print(aircraft_full_array)
 print(aircraft_full_meta)
 
+
+#--- aircraft filters
+
+
+
+
+#--- load coincident MOPITT file
+
+
+
+
+#--- MOPITT spatiotemporal filters
+
+
+
+
+#--- adjust to 10 layers
+
+
+
+
+#--- use MERRA2 water vapor
+
+
+
 # ========================================================================
-# save out location file
+# write out file
 # ========================================================================
-location_temp =  aircraft_full_meta.transpose()
-sitename_temp = aircraft_full_meta.columns.str.split('-')
-location_temp['sitename'] = sitename_temp.str[0]
-location_info = location_temp.groupby(['sitename'], as_index=False).mean()
-print(location_info)
-
-# write the csv
-location_info.to_csv(location_csv_name, index=False, float_format='%.2f')
-
-# ========================================================================
-# calculate average profile and standard deviation
-# ========================================================================
-aircraft_mean = aircraft_full_array.mean(axis=1)
-aircraft_sd = aircraft_full_array.std(axis=1)
-num_prof = aircraft_full_array.shape[1]
-
-# ========================================================================
-# plot profile
-# ========================================================================
-
-plt.figure(figsize=(7,10))
-ax = plt.axes()
-ax.invert_yaxis()
-
-#------------| variable |------| pressure |---------
-profile_plot(aircraft_mean, aircraft_mean.index, plot_color,'Mean CO', 4,'-ok')
-ax.fill_betweenx(aircraft_mean.index, aircraft_mean - aircraft_sd, aircraft_mean + aircraft_sd, color=plot_color, alpha=0.2, label='1 SD')
-
-
-#titles
-plt.title(plot_title,fontsize=16)        
-plt.xlabel('CO VMR (ppb)',fontsize=14)
-plt.ylabel('Pressure (hPa)',fontsize=14)
-ax.tick_params(axis='both', labelsize=14) 
-
-#axes
-plt.xlim(10,170)
-
-# legend
-plt.legend(bbox_to_anchor=(0.98, 0.88),loc='lower right',fontsize=14)
-
-# extra information
-plt.text(0.72, 0.85, "N: "+str(num_prof),fontsize=14, transform=plt.gca().transAxes)
-
-# background grid
-ax.yaxis.grid(color='lightgray', linestyle='dashed', linewidth=1)
-ax.xaxis.grid(color='lightgray', linestyle='dashed', linewidth=1)
-
-plt.savefig(profile_plot_name)
-plt.show()
 
 
 
